@@ -310,7 +310,7 @@
                 <button onclick="processBulk()">Process Bulk</button>
             </div>
 
-            <div class="filters">
+            <div class="filters" id="bulk-filters">
                 <div class="tab filter-btn active" onclick="filterTable('all')">All Messages</div>
                 <div class="tab filter-btn" onclick="filterTable('valid')">Valid Only</div>
                 <div class="tab filter-btn" onclick="filterTable('ignored')">Ignored Only</div>
@@ -533,7 +533,29 @@
                 allResults.push({ original: msg, result });
             });
 
+            updateFilterButtons();
             renderTable('all');
+        }
+
+        function updateFilterButtons() {
+            const container = document.getElementById('bulk-filters');
+            // Keep the first 3 buttons
+            const baseButtons = Array.from(container.children).slice(0, 3);
+            container.innerHTML = '';
+            baseButtons.forEach(b => container.appendChild(b));
+
+            const reasons = [...new Set(allResults
+                .filter(r => r.result.status === 'ignored')
+                .map(r => r.result.reason)
+            )];
+
+            reasons.forEach(reason => {
+                const btn = document.createElement('div');
+                btn.className = 'tab filter-btn';
+                btn.innerText = reason;
+                btn.onclick = (e) => filterTable(reason, e.target);
+                container.appendChild(btn);
+            });
         }
 
         function renderTable(filter) {
@@ -542,7 +564,8 @@
 
             let filtered = allResults;
             if (filter === 'valid') filtered = allResults.filter(r => r.result.status === 'valid');
-            if (filter === 'ignored') filtered = allResults.filter(r => r.result.status === 'ignored');
+            else if (filter === 'ignored') filtered = allResults.filter(r => r.result.status === 'ignored');
+            else if (filter !== 'all') filtered = allResults.filter(r => r.result.reason === filter);
 
             filtered.forEach(row => {
                 const tr = document.createElement('tr');
@@ -566,9 +589,9 @@
             }
         }
 
-        function filterTable(type) {
+        function filterTable(type, target) {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            (target || event.target).classList.add('active');
             renderTable(type);
         }
 
