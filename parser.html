@@ -384,11 +384,16 @@
 
             const type = optionMatch[2].toUpperCase();
 
-            // 4. Entry Price Range (Search AFTER the strike match)
+            // 4. Entry Price Range (Strictly after "price" keyword)
             const remainingText = text.substring(text.indexOf(optionMatch[0]) + optionMatch[0].length);
-            const priceMatch = remainingText.match(/@?\s*(\d{1,5})(?:\s*[-@]\s*(\d{1,5}))?/);
+            const priceKeywordMatch = remainingText.match(/price/i);
 
-            if (!priceMatch) return { status: 'ignored', reason: 'Price range not found after strike' };
+            if (!priceKeywordMatch) return { status: 'ignored', reason: 'Keyword "price" not found after strike' };
+
+            const textAfterPrice = remainingText.substring(priceKeywordMatch.index + priceKeywordMatch[0].length);
+            const priceMatch = textAfterPrice.match(/@?\s*(\d{1,5})(?:\s*[-@]\s*(\d{1,5}))?/);
+
+            if (!priceMatch) return { status: 'ignored', reason: 'Price range not found after "price" keyword' };
 
             let low = parseInt(priceMatch[1]);
             const high = priceMatch[2] ? parseInt(priceMatch[2]) : low;
