@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Telegram Trade Parser</title>
+<style>
+body{font-family:Arial, sans-serif;margin:0;background:#f5f5f5}
+.container{display:grid;grid-template-columns:1fr 1fr;height:100vh}
+.panel{padding:20px}
+textarea{width:100%;height:80%;font-size:16px;padding:10px}
+.result{background:white;padding:20px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.label{font-weight:bold;margin-top:10px}
+button{margin-top:10px;padding:10px 20px;font-size:16px}
+.invalid{color:red;font-weight:bold}
+.valid{color:green;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="panel">
+<h2>Telegram Message</h2>
+<textarea id="input"></textarea>
+<br>
+<button onclick="parseMessage()">Parse</button>
+</div>
+
+<div class="panel">
+<h2>Parsed Output</h2>
+<div id="output" class="result"></div>
+</div>
+
+</div>
+
+<script>
+function parseMessage(){
+
+const text = document.getElementById('input').value
+const lower = text.toLowerCase()
+
+const output = document.getElementById('output')
+
+if(lower.includes('trade') || lower.includes('average')){
+output.innerHTML = '<div class="invalid">Ignored: contains trade/average</div>'
+return
+}
+
+const optionMatch = text.match(/(\d{5,6})\s?(CE|PE)/i)
+const priceMatch = text.match(/(\d{2,5})\s*[-@]\s*(\d{2,5})/)
+
+if(!optionMatch || !priceMatch){
+output.innerHTML = '<div class="invalid">Invalid message format</div>'
+return
+}
+
+const strike = optionMatch[1]
+const type = optionMatch[2].toUpperCase()
+const low = parseInt(priceMatch[1])
+const high = parseInt(priceMatch[2])
+
+if(Math.abs(high-low) > 50){
+output.innerHTML = '<div class="invalid">Ignored: price range greater than 50</div>'
+return
+}
+
+output.innerHTML = `
+<div class="valid">Valid Trade</div>
+<div class="label">Option:</div> ${strike}${type}
+<div class="label">Range Low:</div> ${low}
+<div class="label">Range High:</div> ${high}
+<div class="label">Range Difference:</div> ${Math.abs(high-low)}
+`
+}
+</script>
+
+</body>
+</html>
