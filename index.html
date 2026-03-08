@@ -539,20 +539,39 @@
 
         function updateFilterButtons() {
             const container = document.getElementById('bulk-filters');
-            // Keep the first 3 buttons
-            const baseButtons = Array.from(container.children).slice(0, 3);
             container.innerHTML = '';
-            baseButtons.forEach(b => container.appendChild(b));
 
-            const reasons = [...new Set(allResults
-                .filter(r => r.result.status === 'ignored')
-                .map(r => r.result.reason)
-            )];
+            const counts = {
+                all: allResults.length,
+                valid: allResults.filter(r => r.result.status === 'valid').length,
+                ignored: allResults.filter(r => r.result.status === 'ignored').length
+            };
 
-            reasons.forEach(reason => {
+            // Base Filters
+            const filters = [
+                { id: 'all', label: `All Messages (${counts.all})` },
+                { id: 'valid', label: `Valid Only (${counts.valid})` },
+                { id: 'ignored', label: `Ignored Only (${counts.ignored})` }
+            ];
+
+            filters.forEach(f => {
+                const btn = document.createElement('div');
+                btn.className = `tab filter-btn ${f.id === 'all' ? 'active' : ''}`;
+                btn.innerText = f.label;
+                btn.onclick = (e) => filterTable(f.id, e.target);
+                container.appendChild(btn);
+            });
+
+            // Dynamic Reason Filters
+            const reasonCounts = {};
+            allResults.filter(r => r.result.status === 'ignored').forEach(r => {
+                reasonCounts[r.result.reason] = (reasonCounts[r.result.reason] || 0) + 1;
+            });
+
+            Object.keys(reasonCounts).forEach(reason => {
                 const btn = document.createElement('div');
                 btn.className = 'tab filter-btn';
-                btn.innerText = reason;
+                btn.innerText = `${reason} (${reasonCounts[reason]})`;
                 btn.onclick = (e) => filterTable(reason, e.target);
                 container.appendChild(btn);
             });
