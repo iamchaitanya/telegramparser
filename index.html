@@ -307,7 +307,14 @@
             <div class="controls">
                 <textarea id="bulk-input" style="height: 150px;"
                     placeholder="Paste HTML export or multiple messages here..."></textarea>
-                <button onclick="processBulk()">Process Bulk</button>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <button onclick="processBulk()">Process Text</button>
+                    <div style="font-size: 0.8rem; color: #666; text-align: center;">- OR -</div>
+                    <input type="file" id="bulk-files" multiple accept=".html" style="display: none;"
+                        onchange="handleFileUpload(this)">
+                    <button onclick="document.getElementById('bulk-files').click()" style="background: #444;">Upload
+                        HTML Files</button>
+                </div>
             </div>
 
             <div class="filters" id="bulk-filters">
@@ -493,11 +500,33 @@
         }
 
         // --- BULK TESTER CONTROLLER ---
+        async function handleFileUpload(input) {
+            const files = Array.from(input.files);
+            if (files.length === 0) return;
+
+            allResults = [];
+            const resultsBody = document.getElementById('results-body');
+            resultsBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 3rem;">Reading files...</td></tr>';
+
+            for (const file of files) {
+                const text = await file.text();
+                extractAndParse(text);
+            }
+
+            updateFilterButtons();
+            renderTable('all');
+            input.value = ''; // Reset input
+        }
+
         function processBulk() {
             const input = document.getElementById('bulk-input').value;
-            const tbody = document.getElementById('results-body');
             allResults = [];
+            extractAndParse(input);
+            updateFilterButtons();
+            renderTable('all');
+        }
 
+        function extractAndParse(input) {
             // Targeted HTML Extraction for Telegram Signal Exports
             let messages = [];
             if (input.includes('<div') || input.includes('<span')) {
@@ -532,9 +561,6 @@
                 const result = parseSignal(msg);
                 allResults.push({ original: msg, result });
             });
-
-            updateFilterButtons();
-            renderTable('all');
         }
 
         function updateFilterButtons() {
